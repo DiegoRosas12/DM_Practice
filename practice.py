@@ -2,7 +2,9 @@
 """
 Created on Tue May  5 18:35:46 2020
 
-@author: diego
+@author: Diego Eduardo Rosas Gonzalez
+Practica intermedia
+Mineria de datos
 """
 import math as mt
 import matplotlib.pyplot as plt
@@ -180,9 +182,12 @@ def genderAnalysis():
 #for the annual salary per ethnicity.
 def ethnicityAnalysis():
     
-    ethnicities = ['White or of European descent', 'East Asian', 'Multiracial', 'Black or of African descent', 'Hispanic or Latino/Latinal', 'Middle Eastern', 'Native American', 'Pacific Islander, or Indigenous Australian', 'South Asian', 'Biracial']
+    df_filter = data['Ethnicity'].isnull()
+    devTypes = data[~df_filter]['Ethnicity'].tolist()
+    types = getAllTypes(devTypes)
+    
     df_filter2 = data['ConvertedComp'] > 0
-    for e in ethnicities: 
+    for e in types: 
         print('\n-----------------------------------------------------\n')
         print(e)
         df_filter = data['Ethnicity'] == e
@@ -207,18 +212,22 @@ def developerTypeAnalysis():
     df_filter2 = data['ConvertedComp'] > 0
     devTypes = data[~df_filter]['DevType'].tolist()
     types = getAllTypes(devTypes)
-    
+    maxSalary = 0
+    maxSalaryType = ''
     for t in types:
         print('\n-----------------------------------------------------\n')
         print(t)
         df_filter = data['DevType'].str.contains(t, na = False)
         l = data[df_filter & df_filter2]['ConvertedComp'].tolist()
         fiveNumberSummary(l)
+        if quartile(l, 0.5) > maxSalary:
+            maxSalary = quartile(l, 0.5)
+            maxSalaryType = t
         mean(l)
         plt.boxplot(l, notch=False, sym = '')
         plt.show()
         stdDev(l)
-    
+    print("Min salary:",maxSalaryType, "salary:", maxSalary)
 #developerTypeAnalysis()
 
 # 4
@@ -229,24 +238,43 @@ def salaryCountryAnalysis():
     devTypes = data[~df_filter]['Country'].tolist()
     types = getAllTypes(devTypes)
     
+    maxSalary = 0
+    minSalary = 10000000000
+    minSalaryType = ''
+    maxSalaryType = ''
     for t in types:
         print('\n-----------------------------------------------------\n')
         print(t)
         df_filter = data['Country'].str.contains(t, na = False)
         l = data[df_filter & df_filter2]['ConvertedComp'].tolist()
         if len(l) > 1:
-            print("median: ",quartile(l, 0.5))
+            m = quartile(l, 0.5)
+            print("median: ",m)
             mean(l)
+            if m > maxSalary:
+                maxSalary = m
+                maxSalaryType = t
+            if m < minSalary:
+                minSalary = m
+                minSalaryType = t
             stdDev(l)
         elif len(l) == 1:
-            print("median: ",quartile(l, 0.5))
+            m = quartile(l, 0.5)
+            print("median: ",m)
             mean(l)
+            if m > maxSalary:
+                maxSalary = m
+                maxSalaryType = t
+            if m < minSalary:
+                minSalary = m
+                minSalaryType = t
             print("Standard deviation no possible because single value is given")
         else:
             print("No given information for this country")
-        
+    print("max", maxSalaryType,":",maxSalary)
+    print("min",minSalaryType, ":", minSalary)
 
-# salaryCountryAnalysis()
+#salaryCountryAnalysis()
 
 # 5
 # Obtain a bar plot with the frequencies of responses for each developer type.
@@ -339,12 +367,12 @@ def developerHoursPlot():
 #        for i in b:
 #            repetitions.append(len(i))
 #            labels.append(str(i[0])+ "-" + str(i[len(b)]))
-        print(repetitions)
-        print(labels)
+#        print(repetitions)
+#        print(labels)
         plt.bar(labels, repetitions)
         plt.show()
     
-developerHoursPlot()
+#developerHoursPlot()
 
 
 #8
@@ -413,20 +441,17 @@ def languageAnalysis():
 def experienceSalaryCorrelation():
     df_filter = data['YearsCode'].isnull()
     df_filter2 = data['ConvertedComp'].isnull()
-    l1 = data[~df_filter & df_filter2]['YearsCode'].tolist()
+    l1 = data[~df_filter & ~df_filter2]['YearsCode'].tolist()
     
     for n, i in enumerate(l1):
             if i == 'Less than 1 year':
                 l1[n] = 0
             if i == 'More than 50 years':
-                l1[n] = 51
+                l1[n] = 55
             l1[n] = int(l1[n])
-    l1.sort()
-    
-    
+
     l2 = data[~df_filter2 & ~df_filter2]['ConvertedComp'].tolist()
-    l2.sort()
-    
+
     print("Correlation between years of experience and annual salary:")
     print(correlation(l1, l2))
     
@@ -437,11 +462,8 @@ def experienceSalaryCorrelation():
 def ageSalaryCorrelation():
     df_filter = data['Age'].isnull()
     df_filter2 = data['ConvertedComp'].isnull()
-    l1 = data[~df_filter & df_filter2]['Age'].tolist()
-    l1.sort()
-    l2 = data[~df_filter2 & ~df_filter2]['ConvertedComp'].tolist()
-    l2.sort()
-    
+    l1 = data[~df_filter & ~df_filter2]['Age'].tolist()
+    l2 = data[~df_filter & ~df_filter2]['ConvertedComp'].tolist()
     print("Correlation between the age and the annual salary:")
     print(correlation(l1, l2))
 
@@ -464,16 +486,14 @@ def educationSalaryCorrelation():
      
      df_filter = data['EdLevel'].isnull()
      df_filter2 = data['ConvertedComp'].isnull()
-     l1 = data[~df_filter & df_filter2]['EdLevel'].tolist()
+     l1 = data[~df_filter & ~df_filter2]['EdLevel'].tolist()
      edValues = []
      for i, x in enumerate(l1):
          edValues.append(educationLevels[x])
         
-     edValues.sort()
      l2 = data[~df_filter2 & ~df_filter2]['ConvertedComp'].tolist()
-     l2.sort()
 
-     print("Correlation between the age and the annual salary:")
+     print("Correlation between educational level and annual salary:")
      print(correlation(edValues, l2))
 
 #educationSalaryCorrelation()
@@ -501,7 +521,7 @@ def languagesPlot():
     plt.barh(languages, responses)
     plt.show()
     
-#languagesPlot()
+languagesPlot()
     
     
     
